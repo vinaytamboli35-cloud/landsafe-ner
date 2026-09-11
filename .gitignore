@@ -1,0 +1,8 @@
+backend/venv/
+backend/.env
+backend/.env.txt
+backend/atlas-credentials.env
+__pycache__/
+*.pyc
+*.exe
+.pytest_cache/

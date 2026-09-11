@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7f4" />
+    <title>LANDSAFE-NER | Predict • Monitor • Warn • Protect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3+Hymp4v0j2Q6D6fM9f5e0eXlC7fY=" crossorigin="" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="map-overrides.css" />
+  </head>
+  <body>
+    <section id="loginScreen" class="login-screen" aria-label="Login">
+      <div class="login-card">
+        <div class="brand login-brand"><div class="brand-mark"><span></span><span></span><span></span></div><div><strong>LANDSAFE</strong><small>NER / EARLY WARNING</small></div></div>
+        <p class="eyebrow">SECURE OPERATIONS ACCESS</p>
+        <h1>Welcome back</h1>
+        <p class="login-copy">Sign in to monitor landslide risk across the North Eastern region.</p>
+        <form id="loginForm" class="login-form">
+          <label>Email address<input id="loginEmail" type="email" placeholder="you@example.com" required autocomplete="email" /></label>
+          <label>Password<input id="loginPassword" type="password" placeholder="Enter your password" required minlength="4" autocomplete="current-password" /></label>
+          <p id="loginError" class="login-error" aria-live="polite"></p>
+          <button class="primary-button full" type="submit">Sign in <span>→</span></button>
+          <button class="ghost-button full" id="demoLogin" type="button">Continue as demo user</button>
+        </form>
+        <small class="login-note">Demo access: any valid email and password with at least 4 characters.</small>
+      </div>
+    </section>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark"><span></span><span></span><span></span></div>
+          <div><strong>LANDSAFE</strong><small>NER / EARLY WARNING</small></div>
+        </div>
+
+        <div class="sidebar-section-label">Workspace</div>
+        <nav class="main-nav" aria-label="Main navigation">
+          <button class="nav-item active" data-view="authority"><span class="nav-icon">⌁</span>Command center</button>
+          <button class="nav-item" data-view="citizen"><span class="nav-icon">♧</span>Citizen safety</button>
+          <button class="nav-item" data-view="reports"><span class="nav-icon">▣</span>Incident reports <em id="reportBadge">0</em></button>
+        </nav>
+
+        <div class="sidebar-section-label">System</div>
+        <div class="system-status">
+          <div><span class="status-dot online" id="liveConnectionDot"></span><span id="liveConnectionStatus">Live connection starting</span></div>
+          <div><span class="status-dot online" id="liveSyncDot"></span><span id="liveSyncStatus">Data sync starting</span></div>
+          <div><span class="status-dot warn"></span><span>Live weather paused</span></div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="footer-card"><span class="shield-icon">✦</span><div><strong>People-first warning</strong><p>One risk score. Multiple signals. One actionable warning.</p></div></div>
+          <div class="user-chip"><div class="avatar">SD</div><div><strong>State desk</strong><small>North East operations</small></div><span>•••</span></div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="breadcrumb"><span>LANDSAFE-NER</span><b>/</b><span id="breadcrumbCurrent">Command center</span></div>
+          <div class="topbar-actions"><select id="languageSelect" class="language-select" aria-label="Language"><option value="en">English</option><option value="hi">हिन्दी</option><option value="bn">বাংলা</option><option value="as">অসমীয়া</option></select><span class="last-updated"><span class="pulse"></span> <span id="lastUpdatedText">Updated just now</span></span><div class="notification-wrap"><button class="icon-button" id="notificationButton" title="Notifications" aria-label="Notifications" aria-expanded="false">♧<span class="notification-dot"></span></button><div id="notificationPanel" class="notification-panel" aria-hidden="true"><div class="notification-panel-header"><strong>Notifications</strong><button id="clearNotifications" class="text-button">Mark read</button></div><div id="notificationList"></div></div></div><button class="profile-button"><span class="avatar small">SD</span><span>State desk</span><span>⌄</span></button><button class="logout-button" id="logoutButton" type="button">Logout</button></div>
+        </header>
+
+        <section id="authorityView" class="view active-view">
+          <div class="page-heading"><div><p class="eyebrow" id="dashboardDate">Loading India time…</p><h1>Good morning, State desk <span>✦</span></h1><p class="subheading">Here’s the latest picture of landslide risk across your regions.</p></div><div class="heading-actions"><button class="ghost-button" id="refreshData">↻ Refresh data</button><button class="primary-button" id="runScenario">Run risk scenario <span>→</span></button></div></div>
+          <div class="metric-grid" id="metricGrid"></div>
+
+          <div class="dashboard-grid">
+            <section class="panel map-panel">
+              <div class="panel-header"><div><div class="panel-kicker">LIVE RISK MAP <span class="live-pill"><span class="pulse"></span> Live</span></div><h2>North Eastern India · risk points</h2></div><div class="map-controls"><span class="risk-badge critical">CRITICAL HIGHLIGHTED</span><button class="filter-button location-button" id="locateMe" title="Use your current location">⌖ My location</button></div></div>
+              <form class="map-search" id="mapSearchForm" role="search"><input id="mapSearchInput" type="search" autocomplete="off" placeholder="Search a state or place…" aria-label="Search a state or place" /><button type="submit">Search</button><div id="mapSearchResults" class="map-search-results" role="listbox" aria-label="Map search results"></div></form>
+              <div id="riskMap" class="map"></div>
+              <div class="map-legend"><span><i class="legend-dot critical"></i>Critical</span><span><i class="legend-dot high"></i>High</span><span><i class="legend-dot moderate"></i>Moderate</span><span><i class="legend-dot low"></i>Low</span><span class="legend-note">● Bubble size = population exposure</span></div>
+            </section>
+
+            <section class="panel selected-panel">
+              <div class="panel-header"><div><div class="panel-kicker">SELECTED ZONE</div><h2 id="selectedZoneName">North Sikkim · Zone 04</h2></div><button class="more-button">•••</button></div>
+              <div class="selected-risk"><div class="risk-score" id="selectedScore">84</div><div><span class="risk-badge critical" id="selectedLevel">CRITICAL</span><p>Risk score / 100</p></div></div>
+              <div class="zone-location"><span>⌖</span><span id="selectedCoordinates">27.53° N, 88.52° E</span><span class="separator">·</span><span id="selectedExposure">3,240 people exposed</span></div>
+              <div class="detail-divider"></div>
+              <div class="panel-kicker factors-title">WHY THIS RISK?</div><div id="factorList" class="factor-list"></div>
+              <div class="recommendation"><span class="recommendation-icon">↗</span><div><strong>Recommended action</strong><p id="selectedRecommendation">Avoid the identified road section and initiate a field inspection.</p></div></div>
+            </section>
+
+            <section class="panel chart-panel"><div class="panel-header"><div><div class="panel-kicker">RISK TREND</div><h2>Regional risk · last 7 days</h2></div><select id="trendSelect"><option>All monitored zones</option><option>North Sikkim · Zone 04</option><option>East Khasi Hills · Zone 02</option></select></div><div class="chart-wrap"><canvas id="riskChart"></canvas></div><div class="chart-foot"><span><i class="chart-key risk"></i> Risk score</span><span><i class="chart-key threshold"></i> Critical threshold</span><span class="chart-stat">+18% <small>vs last week</small></span></div></section>
+
+            <section class="panel weather-panel"><div class="panel-header"><div><div class="panel-kicker">WEATHER SIGNAL</div><h2>Monsoon watch</h2></div><span class="weather-icon">◒</span></div><div class="weather-main"><div><strong>24°</strong><span>Partly cloudy</span></div><div class="weather-location">Gangtok, Sikkim<br><small>Feels like 25°</small></div></div><div class="weather-grid"><div><span>Rainfall · 24h</span><strong>68 <small>mm</small></strong></div><div><span>Humidity</span><strong>84 <small>%</small></strong></div><div><span>Wind</span><strong>12 <small>km/h</small></strong></div><div><span>7-day total</span><strong>212 <small>mm</small></strong></div></div><div class="weather-note"><span>↗</span> Rainfall is <strong>32% above</strong> seasonal average</div></section>
+          </div>
+
+          <section class="panel ai-risk-panel"><div class="panel-header"><div><div class="panel-kicker">AI RISK FORECAST</div><h2>Predicted landslide risk</h2></div><span class="ai-status"><i></i> Model updated</span></div><div class="ai-risk-content"><div class="ai-score"><strong id="aiPredictedScore">—</strong><span>/ 100</span><small id="aiPredictedLevel">Waiting for zone data</small></div><div class="ai-details"><div><span>Forecast horizon</span><strong id="aiForecastHorizon">Next 24 hours</strong></div><div><span>Model confidence</span><strong id="aiConfidence">—</strong></div><div><span>Primary drivers</span><strong id="aiDrivers">—</strong></div></div></div><p class="ai-note" id="aiPredictionNote">Select a monitored zone to view its AI-assisted prediction.</p></section>
+
+          <div class="lower-grid"><section class="panel alerts-panel"><div class="panel-header"><div><div class="panel-kicker">ACTION REQUIRED</div><h2>Active alerts <span class="count-badge" id="alertCount">0</span></h2></div><button class="text-button">View all →</button></div><div id="alertList" class="alert-list"></div></section><section class="panel sensor-panel"><div class="panel-header"><div><div class="panel-kicker">FIELD NETWORK</div><h2>Sensor health</h2></div><span class="sensor-health"><i></i> 8 / 10 online</span></div><div class="sensor-progress"><span style="width:80%"></span></div><div class="sensor-stats"><div><strong>8</strong><span>Online</span></div><div><strong>1</strong><span>Delayed</span></div><div><strong>1</strong><span>Offline</span></div></div><div class="sensor-reading"><div class="sensor-avatar">⌁</div><div><strong>SKM-04 · Ground movement</strong><span>Last reading 4 min ago · 2.4 mm/hr</span></div><span class="reading-status">Stable</span></div></section></div>
+        </section>
+
+        <section id="citizenView" class="view"><div class="citizen-hero"><div><p class="eyebrow">PUBLIC SAFETY VIEW · NORTH EAST INDIA</p><h1>Stay informed. Stay safe.</h1><p class="subheading">Check your area’s current landslide risk and help your community by reporting what you see.</p></div><div class="citizen-hero-mark">✦</div></div><div class="citizen-grid"><section class="panel citizen-risk-card"><div class="panel-kicker">YOUR NEAREST MONITORING ZONE</div><h2>Gangtok · East Sikkim</h2><div class="citizen-risk-row"><div class="risk-score large">61</div><div><span class="risk-badge high">HIGH RISK</span><p>Updated 4 minutes ago</p></div></div><div class="citizen-progress"><span style="width:61%"></span></div><p class="citizen-copy">Heavy rainfall over the last 24 hours has increased the risk around steep road sections.</p><button class="primary-button full" id="citizenReportButton">Report what you see <span>→</span></button></section><section class="panel safety-card"><div class="panel-kicker">IF YOU ARE IN A HIGH-RISK AREA</div><h2>Three things to do now</h2><div class="safety-step"><span>01</span><div><strong>Move away from the slope</strong><p>Stay clear of steep cuttings, boulders, and flowing water.</p></div></div><div class="safety-step"><span>02</span><div><strong>Avoid vulnerable road sections</strong><p>Do not stop or park near a visibly cracked or saturated slope.</p></div></div><div class="safety-step"><span>03</span><div><strong>Report signs early</strong><p>Share a photo and location so response teams can act faster.</p></div></div></section></div><section class="panel nearby-panel"><div class="panel-header"><div><div class="panel-kicker">NEARBY ALERTS</div><h2>What’s happening around you</h2></div><span class="safe-route">⌖ Safe route guidance</span></div><div id="citizenAlerts" class="citizen-alerts"></div></section></section>
+
+        <section id="reportsView" class="view"><div class="page-heading"><div><p class="eyebrow">COMMUNITY INTELLIGENCE</p><h1>Incident reports</h1><p class="subheading">Review observations submitted by residents and field teams.</p></div><button class="primary-button" id="openReportModal">+ Report incident</button></div><section class="panel reports-table-panel"><div class="reports-toolbar"><div class="report-filters"><button class="filter-button active">All reports</button><button class="filter-button">Unverified</button><button class="filter-button">Road blocked</button></div><span id="reportSummary">0 reports</span></div><div class="table-wrap"><table><thead><tr><th>Location</th><th>Coordinates</th><th>Submitted</th><th>Severity</th><th>Road status</th><th>Verification</th></tr></thead><tbody id="reportsTableBody"></tbody></table></div></section></section>
+      </main>
+    </div>
+
+    <div id="reportModal" class="modal-backdrop" aria-hidden="true"><div class="modal"><div class="modal-header"><div><div class="panel-kicker">COMMUNITY REPORT</div><h2>Report a landslide or warning sign</h2></div><button class="close-button" id="closeReportModal">×</button></div><form id="reportForm"><label>Location<input name="location" required placeholder="e.g. NH-10, 4 km from Rangpo" /></label><div class="form-row"><label>Latitude<input name="latitude" id="reportLatitude" type="number" step="any" placeholder="e.g. 27.53" /></label><label>Longitude<input name="longitude" id="reportLongitude" type="number" step="any" placeholder="e.g. 88.52" /></label></div><button class="ghost-button" id="reportLocationButton" type="button">⌖ Use my current location</button><div class="form-row"><label>Severity<select name="severity" required><option value="high">High</option><option value="moderate">Moderate</option><option value="critical">Critical</option></select></label><label>Road blocked?<select name="roadBlocked"><option value="yes">Yes</option><option value="no">No</option></select></label></div><label>Description<textarea name="description" required placeholder="What did you observe?"></textarea></label><label>Photo (optional)<input name="photo" type="file" accept="image/*" /></label><div class="form-footer"><span class="form-note">Your report will be shared with the response desk.</span><button class="primary-button" type="submit">Submit report <span>→</span></button></div></form></div></div>
+    <div id="toast" class="toast" role="status"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

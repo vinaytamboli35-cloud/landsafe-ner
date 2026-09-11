@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run LANDSAFE Flask Backend",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/backend/venv/Scripts/python.exe",
+      "program": "${workspaceFolder}/backend/app.py",
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/backend/atlas-credentials.env",
+      "justMyCode": true
+    }
+  ]
+}
